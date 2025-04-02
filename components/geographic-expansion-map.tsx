@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useMemo } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
 import { OrbitControls, Text, Html } from "@react-three/drei"
 import * as THREE from "three"
@@ -172,23 +172,36 @@ function Earth() {
 }
 
 function ConnectionLines() {
+    // Create connection lines between locations
+    const connectionLines = useMemo(() => {
+        const lines = []
+
+        for (let i = 0; i < locations.length; i++) {
+            for (let j = i + 1; j < locations.length; j++) {
+                const points = []
+                points.push(new THREE.Vector3(...locations[i].position))
+                points.push(new THREE.Vector3(...locations[j].position))
+
+                const geometry = new THREE.BufferGeometry().setFromPoints(points)
+
+                lines.push({
+                    key: `${locations[i].id}-${locations[j].id}`,
+                    geometry: geometry
+                })
+            }
+        }
+
+        return lines
+    }, [])
+
     return (
         <>
-            {locations.map((location, i) =>
-                locations.slice(i + 1).map((otherLocation, j) => (
-                    <line key={`${location.id}-${otherLocation.id}`}>
-                        <bufferGeometry attach="geometry">
-                            <bufferAttribute
-                                attachObject={["attributes", "position"]}
-                                array={new Float32Array([...location.position, ...otherLocation.position])}
-                                count={2}
-                                itemSize={3}
-                            />
-                        </bufferGeometry>
-                        <lineBasicMaterial attach="material" color="#3b82f6" opacity={0.3} transparent linewidth={1} />
-                    </line>
-                )),
-            )}
+            {connectionLines.map(line => (
+                <line key={line.key}>
+                    <bufferGeometry attach="geometry" {...line.geometry} />
+                    <lineBasicMaterial attach="material" color="#3b82f6" opacity={0.3} transparent />
+                </line>
+            ))}
         </>
     )
 }
