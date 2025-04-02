@@ -13,11 +13,44 @@ import NewsShare from "@/components/news-share"
 import NewsRelated from "@/components/news-related"
 import { newsData } from "@/data/news-data"
 
+interface Author {
+  id: string
+  name: string
+  title: string
+  avatar: string
+  bio: string
+  twitter?: string
+}
+
+interface ContentSection {
+  heading?: string
+  paragraphs: string[]
+  image?: string
+  imageAlt?: string
+  imageCaption?: string
+}
+
+interface NewsArticle {
+  id: number
+  slug: string
+  title: string
+  excerpt: string
+  date: string
+  author: Author
+  category: string
+  tags: string[]
+  image: string
+  imageCaption?: string
+  readTime: number
+  views: number
+  content: ContentSection[]
+}
+
 export default function NewsDetailPage() {
   const params = useParams()
   const slug = params?.slug as string
-  const [article, setArticle] = useState<any>(null)
-  const [relatedArticles, setRelatedArticles] = useState<any[]>([])
+  const [article, setArticle] = useState<NewsArticle | null>(null)
+  const [relatedArticles, setRelatedArticles] = useState<NewsArticle[]>([])
   const [isShareOpen, setIsShareOpen] = useState(false)
 
   useEffect(() => {
@@ -34,14 +67,14 @@ export default function NewsDetailPage() {
       const foundArticle = newsData.find((item) => item.slug === slug)
 
       if (foundArticle) {
-        setArticle(foundArticle)
+        setArticle(foundArticle as NewsArticle)
 
         // Find related articles in the same category
         const related = newsData
           .filter((item) => item.category === foundArticle.category && item.id !== foundArticle.id)
           .slice(0, 3)
 
-        setRelatedArticles(related)
+        setRelatedArticles(related as NewsArticle[])
       }
     }
   }, [slug])
@@ -145,7 +178,7 @@ export default function NewsDetailPage() {
                 <div className="prose prose-lg max-w-none">
                   <p className="text-xl font-medium mb-6 text-foreground">{article.excerpt}</p>
 
-                  {article.content.map((section: any, index: number) => (
+                  {article.content.map((section: ContentSection, index: number) => (
                     <div key={index} className="mb-8">
                       {section.heading && <h2 className="text-2xl font-bold mb-4">{section.heading}</h2>}
                       {section.paragraphs.map((paragraph: string, pIndex: number) => (
@@ -237,7 +270,7 @@ export default function NewsDetailPage() {
                   <Card className="mb-6">
                     <CardContent className="p-5">
                       <h3 className="text-xl font-semibold mb-4">Related Articles</h3>
-                      <NewsRelated articles={relatedArticles} />
+                      <NewsRelated articles={relatedArticles} currentNewsSlug={slug} />
                     </CardContent>
                   </Card>
 
@@ -293,12 +326,7 @@ export default function NewsDetailPage() {
       </section>
 
       {/* Share Modal */}
-      <NewsShare
-        isOpen={isShareOpen}
-        onClose={() => setIsShareOpen(false)}
-        title={article.title}
-        url={`https://beyonduniverse.com/news/${article.slug}`}
-      />
+      <NewsShare title={article.title} url={`https://beyonduniverse.com/news/${article.slug}`} />
     </div>
   )
 }
